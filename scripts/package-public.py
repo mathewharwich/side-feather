@@ -14,7 +14,7 @@ import subprocess
 import urllib.request
 
 REPOSITORY = "https://github.com/mathewharwich/side-feather"
-DOCS = ["README.md", "PRIVACY.md", "SUPPORT.md", "SECURITY.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "docs/VERIFICATION.md", "docs/images/side-feather-demo.png"]
+DOCS = ["README.md", "PRIVACY.md", "SUPPORT.md", "SECURITY.md", "CHANGELOG.md", "CONTRIBUTING.md", "LICENSE", "THIRD_PARTY_NOTICES.md", "docs/VERIFICATION.md", "docs/images/side-feather-demo.png"]
 PRIVATE_MARKERS = [b"/Users/", b"/home/", b"/private/var/", b"/private/tmp/", b"/tmp/"]
 MIT_TERMS = """Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -174,7 +174,7 @@ See README.md and the release notes for the exact tested host configuration.
 
 INSTALL
 1. Save your work and quit Premiere.
-2. Open Install Side Feather.app and click Install Side Feather.
+2. Open Install Side Feather.app and click Install.
 3. Reopen Premiere. Search the Effects panel for Side Feather.
 4. Drag it onto a video clip, then adjust one side in Effect Controls.
 
@@ -184,7 +184,7 @@ are kept in dated backups. The installer does not open or alter your projects.
 
 REMOVE
 Save your work and quit Premiere. Open Install Side Feather.app and choose
-Remove Side Feather, then confirm. The plug-in moves to a dated backup.
+Remove…, then confirm. The plug-in moves to a dated backup.
 Projects and source media remain untouched. A project using this effect will
 need the plug-in installed to reproduce its feathering.
 
@@ -214,11 +214,25 @@ Side Feather is independent software; Adobe does not provide its support.
 
 def package(args):
     plugin, installer, docs, licenses, output = map(Path, [args.plugin, args.installer, args.docs_root, args.licenses, args.output])
+    if not args.sign_identity:
+        raise SystemExit("Public downloads require --sign-identity or SIDE_FEATHER_SIGN_IDENTITY.")
     for name in DOCS:
         if not (docs / name).is_file():
             raise SystemExit(f"Required public document is missing: {name}")
     for path in [plugin, installer]:
         run("codesign", "--verify", "--deep", "--strict", "--verbose=2", str(path))
+        description = subprocess.run(["codesign", "--display", "--verbose=4", str(path)], check=True, capture_output=True, text=True).stderr
+        if "Authority=Developer ID Application:" not in description:
+            raise SystemExit(f"A public payload must have a Developer ID Application signature: {path.name}")
+    embedded = installer / "Contents/Resources/Side Feather.plugin"
+    plugin_files = {p.relative_to(plugin): digest(p) for p in plugin.rglob("*") if p.is_file()}
+    embedded_files = {p.relative_to(embedded): digest(p) for p in embedded.rglob("*") if p.is_file()}
+    if plugin_files != embedded_files:
+        raise SystemExit("Installer payload differs from the manual-install plug-in.")
+    if args.build_manifest:
+        manifest = json.loads(Path(args.build_manifest).read_text())
+        if manifest["pluginExecutableSha256"] != digest(plugin / "Contents/MacOS/Edge Feather"):
+            raise SystemExit("Build manifest does not match the signed plug-in executable.")
     stage = output / f"SideFeather-{args.version}"
     if stage.exists():
         raise SystemExit("Output staging folder already exists; choose a fresh output directory.")
@@ -227,7 +241,8 @@ def package(args):
         (stage / name).parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(docs / name, stage / name)
     for name in ["THIRD_PARTY_LICENSES.txt", "RUST_STANDARD_LIBRARY_COPYRIGHT.html", "DEPENDENCY_LICENSE_INVENTORY.json"]:
-        shutil.copyfile(licenses / name, stage / name)
+        (stage / "licenses").mkdir(exist_ok=True)
+        shutil.copyfile(licenses / name, stage / "licenses" / name)
     (stage / "Read Me.txt").write_text(INSTALL_GUIDE)
     run("ditto", "--norsrc", "--noextattr", str(installer), str(stage / installer.name))
     manual = stage / "Manual Install"

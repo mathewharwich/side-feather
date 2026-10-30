@@ -20,4 +20,6 @@ For the complete resolved license and source inventory, run:
 cargo metadata --format-version 1 --locked > dependency-inventory.json
 ```
 
-The local prototype bundle is ad-hoc signed. It is not a notarized public release.
+Full reproduced notices are in [licenses/THIRD_PARTY_LICENSES.txt](licenses/THIRD_PARTY_LICENSES.txt), with the resolved dependency inventory and Rust standard-library copyright files alongside it. The distributed plug-in also retains these notices in its Resources/Legal folder.
+
+Contributor builds use ad-hoc signatures. The public beta is signed with Developer ID and is not notarized by Apple; see the installation section of the README.

@@ -54,4 +54,4 @@ if [[ -n "${SIDE_FEATHER_SIGN_IDENTITY:-}" ]]; then
   codesign --force --options runtime --timestamp --sign "$SIDE_FEATHER_SIGN_IDENTITY" "$APP_OUTPUT_PATH"
 fi
 echo "Built universal macOS 12+ installer: $APP_OUTPUT_PATH"
-echo "Developer ID signing and notarization are required before public distribution."
+echo "Developer ID signing and Apple notarization are separate release steps; this script does not notarize."

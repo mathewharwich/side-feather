@@ -2,6 +2,10 @@
 /dist/
 /release/artifacts/
 /release/staging/
+/release/build-target/
+/release/public-build/
+/release/downloads*/
+/release/licenses/
 /verification/
 /outputs/
 /dependency-inventory.json
