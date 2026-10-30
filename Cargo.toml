@@ -1,0 +1,24 @@
+[package]
+name = "edge_feather"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Independent four-side transparency feather for Adobe Premiere Pro"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+after-effects = "=0.4.0"
+
+[build-dependencies]
+pipl = "=0.1.1"
+cc = "=1.2.65"
+
+[profile.release]
+lto = true
+codegen-units = 1
+debug = 1
+
+[lints.rust]
+unexpected_cfgs = { level = "allow", check-cfg = ["cfg(with_premiere)", "cfg(catch_panics)", "cfg(does_dialog)", "cfg(threaded_rendering)", "cfg(smart_render)", "cfg(gpu_render)", "cfg(uses_audio)", "cfg(sends_update_params_ui)"] }

@@ -1,0 +1,16 @@
+/target/
+/dist/
+/release/artifacts/
+/release/staging/
+/verification/
+/outputs/
+/dependency-inventory.json
+*.dmg
+*.zip
+*.dSYM/
+.DS_Store
+.env
+.env.*
+*.p12
+*.p8
+*.mobileprovision
